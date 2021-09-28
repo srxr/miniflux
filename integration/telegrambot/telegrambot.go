@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"miniflux.app/model"
@@ -31,8 +30,15 @@ func PushEntry(entry *model.Entry, botToken, chatID string) error {
 		return fmt.Errorf("telegrambot: template execution failed: %w", err)
 	}
 
-	chatIDInt, _ := strconv.ParseInt(chatID, 10, 64)
-	msg := tgbotapi.NewMessage(chatIDInt, result.String())
+	conf := tgbotapi.ChatConfig{
+		SuperGroupUsername: chatID,
+	}
+	chat, err := bot.GetChat(conf)
+	if err != nil {
+		return err
+	}
+
+	msg := tgbotapi.NewMessage(chat.ID, result.String())
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.DisableWebPagePreview = false
 	if _, err := bot.Send(msg); err != nil {
